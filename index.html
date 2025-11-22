@@ -2,7 +2,10 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Barberflix - Encontre a Barbearia Perfeita</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -333,6 +336,33 @@
             color: #999;
         }
         
+        /* Otimizações de Performance */
+        * { 
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+        }
+        
+        img {
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+        }
+        
+        /* Melhorias de Touch */
+        button, .btn, .barbershop-card {
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        input, textarea, select {
+            touch-action: manipulation;
+        }
+        
+        @media (max-width: 1024px) {
+            .barbershops-grid { grid-template-columns: repeat(2, 1fr) !important; }
+            .nav-buttons { gap: 12px; }
+        }
+        
         @media (max-width: 768px) { 
             nav { padding: 15px 20px; flex-wrap: wrap; }
             .nav-buttons { gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
@@ -342,7 +372,7 @@
             .hero-title { font-size: 2rem !important; }
             .hero-subtitle { font-size: 1rem !important; }
             .search-container { flex-direction: column !important; }
-            .search-bar input { padding: 12px 12px 12px 45px; }
+            .search-bar input { padding: 12px 12px 12px 45px; font-size: 16px; -webkit-appearance: none; appearance: none; }
             .city-filter-btn { width: 100%; justify-content: center; }
             .barbershops-container { padding: 20px 15px !important; }
             .section-header { flex-direction: column; align-items: flex-start !important; gap: 10px; }
@@ -359,17 +389,24 @@
             .empty-state { padding: 40px 15px !important; }
             .empty-state h2 { font-size: 1.5rem !important; }
             .modal-content { padding: 30px 20px; width: 95%; max-height: 95vh; }
-            .form-group input, .form-group textarea { font-size: 16px; padding: 14px; }
+            .form-group input, .form-group textarea { 
+                font-size: 16px; 
+                padding: 14px; 
+                -webkit-appearance: none;
+                appearance: none;
+            }
             .plans-grid { grid-template-columns: 1fr !important; }
             .share-options { grid-template-columns: repeat(2, 1fr) !important; }
             .time-slots-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 8px !important; }
             .time-slot { padding: 10px 12px !important; font-size: 0.85rem !important; }
+            .client-nav-menu { gap: 15px !important; }
+            .user-greeting { font-size: 12px !important; }
         }
         @media (max-width: 480px) {
             nav { padding: 12px 15px; }
             .logo { font-size: 20px; }
             .nav-buttons { gap: 8px; flex-wrap: wrap; }
-            .nav-buttons button { padding: 6px 12px; font-size: 12px; }
+            .nav-buttons button { padding: 6px 12px; font-size: 12px; width: 100%; }
             .barbershops-container { padding: 15px 10px !important; }
             .barbershops-header h1 { font-size: 1.5rem !important; }
             .barbershop-image { height: 160px !important; }
@@ -381,6 +418,14 @@
             .share-options { grid-template-columns: 1fr !important; }
             .time-slots-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 6px !important; }
             .time-slot { padding: 8px 10px !important; font-size: 0.8rem !important; }
+            .client-nav-menu { display: none !important; }
+        }
+        
+        @media (max-width: 360px) {
+            nav { padding: 10px 12px; }
+            .logo { font-size: 18px; }
+            .barbershops-container { padding: 12px 8px !important; }
+            .modal-content { padding: 20px 12px; }
         }
     </style>
 </head>
@@ -711,6 +756,21 @@
                 </div>
                 
                 <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="color: #ccc; font-size: 0.95rem; margin-bottom: 8px; display: block;">Profissional *</label>
+                    <select id="appointmentProfessional" required
+                           style="width: 100%; padding: 14px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; font-size: 16px; cursor: pointer;"
+                           onfocus="this.style.borderColor='#e50914'; this.style.background='rgba(255,255,255,0.08)'"
+                           onblur="this.style.borderColor='rgba(255,255,255,0.1)'; this.style.background='rgba(255,255,255,0.05)'">
+                        <option value="">Selecione um profissional</option>
+                    </select>
+                    <div id="professionalInfo" style="margin-top: 10px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px; display: none;">
+                        <p style="color: #999; font-size: 0.85rem; margin: 4px 0;"><strong style="color: #ccc;">Especialidade:</strong> <span id="professionalSpecialty"></span></p>
+                        <p style="color: #999; font-size: 0.85rem; margin: 4px 0;"><strong style="color: #ccc;">Telefone:</strong> <span id="professionalPhone"></span></p>
+                        <p style="color: #999; font-size: 0.85rem; margin: 4px 0;"><strong style="color: #ccc;">WhatsApp:</strong> <span id="professionalWhatsApp"></span></p>
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 20px;">
                     <label style="color: #ccc; font-size: 0.95rem; margin-bottom: 8px; display: block;">Horário</label>
                     <input type="hidden" id="appointmentTime" required>
                     <div class="time-picker-container">
@@ -960,16 +1020,24 @@
                 modal.style.zIndex = '2000';
                 document.body.style.overflow = ''; // Restaurar scroll
                 
-                // Limpar seletor de horários e serviços se for modal de agendamento
+                // Limpar seletor de horários, serviços e profissional se for modal de agendamento
                 if (modalId === 'appointmentModal') {
                     const timeInput = document.getElementById('appointmentTime');
                     const timeSlotsContainer = document.getElementById('timeSlotsContainer');
                     const timePickerInfo = document.getElementById('timePickerInfo');
                     const servicesContainer = document.getElementById('appointmentServices');
+                    const professionalSelect = document.getElementById('appointmentProfessional');
+                    const professionalInfo = document.getElementById('professionalInfo');
                     if (timeInput) timeInput.value = '';
                     if (timeSlotsContainer) timeSlotsContainer.innerHTML = '<div class="time-picker-loading">Carregando horários disponíveis...</div>';
                     if (timePickerInfo) timePickerInfo.textContent = '';
                     if (servicesContainer) servicesContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;"><p>Carregando serviços...</p></div>';
+                    if (professionalSelect) {
+                        professionalSelect.innerHTML = '<option value="">Selecione um profissional</option>';
+                        professionalSelect.value = '';
+                        professionalSelect.dataset.hasListener = ''; // Resetar flag do listener
+                    }
+                    if (professionalInfo) professionalInfo.style.display = 'none';
                 }
                 
                 console.log('✅ Modal fechado:', modalId);
@@ -2666,6 +2734,10 @@
                     }
                 }
                 
+                // Carregar profissionais da barbearia
+                console.log('👥 Carregando profissionais da barbearia...');
+                await loadBarbershopProfessionals(shopId);
+                
                 // Carregar horários disponíveis para a data inicial
                 const initialDate = dateInput?.value || new Date().toISOString().split('T')[0];
                 console.log('📅 Carregando horários para data:', initialDate);
@@ -3166,6 +3238,299 @@
         }
         window.loadBarbershopServices = loadBarbershopServices;
         
+        // Função para carregar profissionais da barbearia
+        async function loadBarbershopProfessionals(shopId) {
+            console.log('👥 === loadBarbershopProfessionals INICIADO ===');
+            console.log('👥 shopId:', shopId);
+            
+            const professionalSelect = document.getElementById('appointmentProfessional');
+            const professionalInfo = document.getElementById('professionalInfo');
+            
+            if (!professionalSelect) {
+                console.error('❌ Select de profissionais não encontrado!');
+                return;
+            }
+            
+            // Limpar opções anteriores (exceto a primeira)
+            professionalSelect.innerHTML = '<option value="">Selecione um profissional</option>';
+            if (professionalInfo) {
+                professionalInfo.style.display = 'none';
+            }
+            
+            try {
+                if (!shopId) {
+                    throw new Error('ID da barbearia não fornecido');
+                }
+                
+                // Buscar profissionais da barbearia (user_type = 'barber' e barbershop_id = shopId)
+                let professionals = [];
+                let lastError = null;
+                
+                if (supabase) {
+                    try {
+                        console.log('🔍 Buscando profissionais via Supabase...');
+                        console.log('📋 Parâmetros:', { shopId, user_type: 'barber' });
+                        
+                        // Tentar buscar via REST API primeiro
+                        try {
+                            const SUPABASE_URL_VALUE = 'https://tvvqwlxmpmolnyavabqq.supabase.co';
+                            const SUPABASE_REST_URL = `${SUPABASE_URL_VALUE}/rest/v1/profiles?barbershop_id=eq.${shopId}&user_type=eq.barber&select=id,full_name,specialty,phone,whatsapp&order=full_name.asc`;
+                            console.log('🌐 Buscando via REST API:', SUPABASE_REST_URL);
+                            
+                            const response = await Promise.race([
+                                fetch(SUPABASE_REST_URL, {
+                                    method: 'GET',
+                                    headers: {
+                                        'apikey': SUPABASE_KEY,
+                                        'Authorization': `Bearer ${SUPABASE_KEY}`,
+                                        'Content-Type': 'application/json'
+                                    }
+                                }),
+                                new Promise((_, reject) => 
+                                    setTimeout(() => reject(new Error('Timeout REST API')), 8000)
+                                )
+                            ]);
+                            
+                            console.log('📊 Status da resposta REST API:', response.status, response.statusText);
+                            
+                            if (response.ok) {
+                                professionals = await response.json();
+                                console.log('✅ Profissionais encontrados via REST API:', professionals.length);
+                                if (professionals.length > 0) {
+                                    console.log('📋 Primeiro profissional:', professionals[0]);
+                                }
+                            } else {
+                                const errorText = await response.text();
+                                console.error('❌ Erro na resposta REST API:', response.status, errorText);
+                                lastError = { status: response.status, message: errorText };
+                                
+                                // Tentar via Supabase client como fallback
+                                console.log('🔄 Tentando via Supabase client...');
+                                const { data, error } = await Promise.race([
+                                    supabase
+                                        .from('profiles')
+                                        .select('id,full_name,specialty,phone,whatsapp')
+                                        .eq('barbershop_id', shopId)
+                                        .eq('user_type', 'barber')
+                                        .order('full_name', { ascending: true }),
+                                    new Promise((_, reject) => 
+                                        setTimeout(() => reject(new Error('Timeout Supabase client')), 5000)
+                                    )
+                                ]);
+                                
+                                if (error) {
+                                    console.error('❌ Erro no Supabase client:', error);
+                                    lastError = error;
+                                } else if (data) {
+                                    professionals = data;
+                                    console.log('✅ Profissionais encontrados via Supabase client:', professionals.length);
+                                }
+                            }
+                        } catch (restError) {
+                            console.error('❌ Erro ao buscar via REST API:', restError);
+                            lastError = restError;
+                            
+                            // Tentar via Supabase client como fallback
+                            console.log('🔄 Tentando via Supabase client (fallback)...');
+                            try {
+                                const { data, error } = await Promise.race([
+                                    supabase
+                                        .from('profiles')
+                                        .select('id,full_name,specialty,phone,whatsapp')
+                                        .eq('barbershop_id', shopId)
+                                        .eq('user_type', 'barber')
+                                        .order('full_name', { ascending: true }),
+                                    new Promise((_, reject) => 
+                                        setTimeout(() => reject(new Error('Timeout Supabase client')), 5000)
+                                    )
+                                ]);
+                                
+                                if (error) {
+                                    console.error('❌ Erro no Supabase client (fallback):', error);
+                                    lastError = error;
+                                } else if (data) {
+                                    professionals = data;
+                                    console.log('✅ Profissionais encontrados via Supabase client (fallback):', professionals.length);
+                                }
+                            } catch (supabaseError) {
+                                console.error('❌ Erro ao buscar profissionais (Supabase client):', supabaseError);
+                                lastError = supabaseError;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('❌ Erro geral ao buscar profissionais:', error);
+                        lastError = error;
+                    }
+                } else {
+                    console.error('❌ Supabase não está disponível!');
+                    lastError = new Error('Supabase não disponível');
+                }
+                
+                // Se não encontrou profissionais, tentar buscar todos os barbeiros (sem filtro de barbearia)
+                // SOLUÇÃO TEMPORÁRIA: Mostrar todos os barbeiros se não encontrar da barbearia específica
+                if (professionals.length === 0) {
+                    console.log('🔍 Não encontrou profissionais com filtro de barbearia, tentando buscar todos os barbeiros...');
+                    try {
+                        const { data: allBarbers, error: allBarbersError } = await Promise.race([
+                            supabase
+                                .from('profiles')
+                                .select('id,full_name,specialty,phone,whatsapp,barbershop_id')
+                                .eq('user_type', 'barber')
+                                .order('full_name', { ascending: true }),
+                            new Promise((_, reject) => 
+                                setTimeout(() => reject(new Error('Timeout')), 5000)
+                            )
+                        ]);
+                        
+                        if (!allBarbersError && allBarbers && allBarbers.length > 0) {
+                            console.log('📊 Total de barbeiros encontrados (sem filtro):', allBarbers.length);
+                            console.log('📋 Barbeiros encontrados:', allBarbers.map(b => ({
+                                nome: b.full_name,
+                                barbershop_id: b.barbershop_id,
+                                match: b.barbershop_id === shopId
+                            })));
+                            
+                            // SOLUÇÃO TEMPORÁRIA: Usar todos os barbeiros se não encontrou da barbearia específica
+                            // Isso permite que o agendamento funcione mesmo se o barbershop_id não estiver correto
+                            if (allBarbers.length > 0) {
+                                console.log('⚠️ Usando todos os barbeiros como fallback (barbershop_id pode não corresponder)');
+                                professionals = allBarbers;
+                            } else {
+                                console.log('⚠️ Nenhum barbeiro encontrado na tabela profiles (user_type = "barber")');
+                            }
+                            
+                            console.log('💡 Dica: Verifique se os barbeiros têm o barbershop_id correto (' + shopId + ')');
+                        } else if (allBarbersError) {
+                            console.error('❌ Erro ao buscar todos os barbeiros:', allBarbersError);
+                            lastError = allBarbersError;
+                            
+                            // Tentar buscar sem filtro de user_type (caso o valor esteja diferente)
+                            console.log('🔍 Tentando buscar sem filtro de user_type...');
+                            try {
+                                const { data: allProfiles, error: profilesError } = await Promise.race([
+                                    supabase
+                                        .from('profiles')
+                                        .select('id,full_name,specialty,phone,whatsapp,barbershop_id,user_type')
+                                        .order('full_name', { ascending: true })
+                                        .limit(50),
+                                    new Promise((_, reject) => 
+                                        setTimeout(() => reject(new Error('Timeout')), 5000)
+                                    )
+                                ]);
+                                
+                                if (!profilesError && allProfiles && allProfiles.length > 0) {
+                                    console.log('📊 Total de perfis encontrados (sem filtro de user_type):', allProfiles.length);
+                                    console.log('📋 Tipos de user_type encontrados:', [...new Set(allProfiles.map(p => p.user_type))]);
+                                    console.log('📋 Perfis:', allProfiles.map(p => ({
+                                        nome: p.full_name,
+                                        user_type: p.user_type,
+                                        barbershop_id: p.barbershop_id
+                                    })));
+                                }
+                            } catch (debugError2) {
+                                console.warn('⚠️ Erro ao buscar todos os perfis:', debugError2);
+                            }
+                        } else {
+                            console.log('⚠️ Nenhum barbeiro encontrado na tabela profiles (user_type = "barber")');
+                        }
+                    } catch (debugError) {
+                        console.warn('⚠️ Erro ao fazer busca de debug:', debugError);
+                        if (!lastError) {
+                            lastError = debugError;
+                        }
+                    }
+                }
+                
+                // Log final
+                console.log('📊 Resultado final:', {
+                    profissionaisEncontrados: professionals.length,
+                    temErro: !!lastError,
+                    erro: lastError?.message || lastError
+                });
+                
+                // Armazenar profissionais para uso posterior
+                window.currentProfessionals = professionals || [];
+                
+                // Preencher select com profissionais
+                if (professionals && professionals.length > 0) {
+                    professionals.forEach(prof => {
+                        const option = document.createElement('option');
+                        option.value = prof.id;
+                        option.textContent = prof.full_name || 'Profissional';
+                        option.setAttribute('data-specialty', prof.specialty || '');
+                        option.setAttribute('data-phone', prof.phone || '');
+                        option.setAttribute('data-whatsapp', prof.whatsapp || '');
+                        professionalSelect.appendChild(option);
+                    });
+                    console.log('✅ Profissionais carregados no select:', professionals.length);
+                } else {
+                    // Se não encontrou profissionais, mostrar mensagem apropriada
+                    const option = document.createElement('option');
+                    option.value = '';
+                    
+                    if (lastError) {
+                        // Se houve erro, mostrar mensagem de erro
+                        if (lastError.message?.includes('permission denied') || lastError.message?.includes('RLS')) {
+                            option.textContent = 'Erro: Verifique permissões RLS no Supabase';
+                        } else if (lastError.message?.includes('Timeout')) {
+                            option.textContent = 'Erro: Timeout ao buscar profissionais';
+                        } else {
+                            option.textContent = 'Erro ao carregar profissionais';
+                        }
+                        console.error('❌ Erro ao carregar profissionais:', lastError);
+                    } else {
+                        // Se não houve erro, apenas não há profissionais
+                        option.textContent = 'Nenhum profissional disponível';
+                        console.log('⚠️ Nenhum profissional encontrado para esta barbearia (shopId: ' + shopId + ')');
+                        console.log('💡 Dica: Verifique se há profissionais cadastrados com barbershop_id = ' + shopId + ' e user_type = "barber"');
+                    }
+                    
+                    option.disabled = true;
+                    professionalSelect.appendChild(option);
+                }
+                
+                // Adicionar listener para mudança de seleção (remover listener anterior se existir)
+                const existingListener = professionalSelect.dataset.hasListener;
+                if (!existingListener) {
+                    professionalSelect.dataset.hasListener = 'true';
+                    professionalSelect.addEventListener('change', function() {
+                        const selectedId = this.value;
+                        if (selectedId && professionalInfo) {
+                            const selectedOption = this.options[this.selectedIndex];
+                            const specialty = selectedOption.getAttribute('data-specialty') || 'Não informado';
+                            const phone = selectedOption.getAttribute('data-phone') || 'Não informado';
+                            const whatsapp = selectedOption.getAttribute('data-whatsapp') || 'Não informado';
+                            
+                            const specialtyEl = document.getElementById('professionalSpecialty');
+                            const phoneEl = document.getElementById('professionalPhone');
+                            const whatsappEl = document.getElementById('professionalWhatsApp');
+                            
+                            if (specialtyEl) specialtyEl.textContent = specialty;
+                            if (phoneEl) phoneEl.textContent = phone;
+                            if (whatsappEl) whatsappEl.textContent = whatsapp || phone;
+                            
+                            professionalInfo.style.display = 'block';
+                        } else {
+                            if (professionalInfo) {
+                                professionalInfo.style.display = 'none';
+                            }
+                        }
+                    });
+                }
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar profissionais:', error);
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'Erro ao carregar profissionais';
+                option.disabled = true;
+                professionalSelect.appendChild(option);
+            }
+            
+            console.log('✅ === loadBarbershopProfessionals CONCLUÍDO ===');
+        }
+        window.loadBarbershopProfessionals = loadBarbershopProfessionals;
+        
         async function submitAppointment() {
             const alert = document.getElementById('appointmentAlert');
             const dateInput = document.getElementById('appointmentDate');
@@ -3174,6 +3539,12 @@
             const submitButton = document.querySelector('#appointmentForm button[type="submit"]');
             
             // Validações básicas
+            const professionalSelect = document.getElementById('appointmentProfessional');
+            if (!professionalSelect?.value) {
+                showAlert(alert, 'Por favor, selecione um profissional.', 'error');
+                return;
+            }
+            
             if (!dateInput?.value || !timeInput?.value) {
                 showAlert(alert, 'Por favor, preencha data e horário.', 'error');
                 return;
@@ -3219,10 +3590,15 @@
                     }
                 });
                 
+                // Obter profissional selecionado
+                const professionalId = professionalSelect.value;
+                const professionalName = professionalSelect.options[professionalSelect.selectedIndex]?.textContent || 'Profissional';
+                
                 // Preparar dados - APENAS CAMPOS OBRIGATÓRIOS
                 const appointmentData = {
                     client_id: user.id,
                     barbershop_id: window.currentAppointmentShopId,
+                    professional_id: professionalId,
                     appointment_date: dateInput.value,
                     appointment_time: timeInput.value,
                     status: 'pending'
@@ -3266,6 +3642,7 @@
                         appointment_time: appointmentData.appointment_time,
                         client_email: user.email || 'Cliente',
                         barbershop_name: window.currentAppointmentShopName || 'Barbearia',
+                        professional_name: professionalName,
                         services: selectedServices.join(', ') || 'Não especificado',
                         notes: appointmentData.notes || ''
                     };
@@ -4519,6 +4896,23 @@
             alert(`Plano ${selectedPlan} selecionado! Em breve você poderá cadastrar sua barbearia.`);
             // Exemplo: window.location.href = `barberflix-cadastro-barbearia.html?plan=${selectedPlan}`;
         }
+        // Prevenir zoom em inputs no iOS
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputs = document.querySelectorAll('input, textarea, select');
+            inputs.forEach(input => {
+                if (input.type !== 'file') {
+                    input.style.fontSize = '16px'; // Previne zoom no iOS
+                }
+            });
+        });
+        
+        // Listener para redimensionamento da janela
+        window.addEventListener('resize', () => {
+            // Ajustar layout se necessário
+            if (window.innerWidth > 768) {
+                // Desktop - garantir que elementos estejam visíveis
+            }
+        });
     </script>
 </body>
 </html>
